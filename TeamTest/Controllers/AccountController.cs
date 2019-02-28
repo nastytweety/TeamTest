@@ -17,6 +17,7 @@ namespace TeamTest.Controllers
     {
         private ApplicationSignInManager _signInManager;
         private ApplicationUserManager _userManager;
+        private ApplicationDbContext db = new ApplicationDbContext(); 
 
         public AccountController()
         {
@@ -26,6 +27,7 @@ namespace TeamTest.Controllers
         {
             UserManager = userManager;
             SignInManager = signInManager;
+            //db = 
         }
 
         public ApplicationSignInManager SignInManager
@@ -68,6 +70,7 @@ namespace TeamTest.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Login(LoginViewModel model, string returnUrl)
         {
+            var user = await UserManager.FindByEmailAsync(model.Email);
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -75,7 +78,7 @@ namespace TeamTest.Controllers
 
             // This doesn't count login failures towards account lockout
             // To enable password failures to trigger account lockout, change to shouldLockout: true
-            var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, shouldLockout: false);
+            var result = await SignInManager.PasswordSignInAsync(user.UserName, model.Password, model.RememberMe, shouldLockout: false);
             switch (result)
             {
                 case SignInStatus.Success:
@@ -151,10 +154,29 @@ namespace TeamTest.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
+                var user = new ApplicationUser { UserName = model.Username, Email = model.Email, ProfilePic = model.ProfilePic, UserRole = model.UserRole};
                 var result = await UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
+                    switch(user.UserRole)
+                    {
+                        case UserRole.Teacher:
+                            Teacher teach = new Teacher();
+                            teach.TeacherId = user.Id;
+                            teach.TeacherName = user.UserName;
+                            db.Teachers.Add(teach);
+                            db.SaveChanges();
+                            break;
+                        case UserRole.Student:
+                            Student stud = new Student();
+                            stud.StudentId = user.Id;
+                            stud.StudentName = user.UserName;
+                            db.Students.Add(stud);
+                            db.SaveChanges();
+                            break;
+                        case UserRole.Parent:
+                            break;
+                    }
                     await SignInManager.SignInAsync(user, isPersistent:false, rememberBrowser:false);
                     
                     // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=320771

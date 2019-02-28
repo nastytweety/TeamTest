@@ -79,6 +79,17 @@ namespace TeamTest.Models
         [Display(Name = "Confirm password")]
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; }
+
+        [Display(Name = "Profile Picture Url")]
+        public string ProfilePic { get; set; }
+
+        [Required]
+        [Display(Name = "User Role")]
+        public UserRole UserRole { get; set; }
+
+        [Required]
+        [Display(Name = "Username")]
+        public string Username { get; set; }
     }
 
     public class ResetPasswordViewModel
